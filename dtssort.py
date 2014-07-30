@@ -13,6 +13,7 @@ sort_blocks = [ORDER_ADDRESS]
 sort_statements = []
 statement_prio = 0
 block_prio = 0
+directive_prio = 0
 
 import argparse
 
@@ -154,9 +155,9 @@ def parse_next():
 	if next == NEXT_BLOCK:
 		return Block.parse()
 	elif next == NEXT_STATEMENT:
-		return Statement.parse(False)
+		return Statement.parse()
 	elif next == NEXT_DIRECTIVE:
-		return Statement.parse(True)
+		return Directive.parse()
 	elif next == NEXT_GLOBAL_COMMENT:
 		return Comment.parse()
 	elif next == NEXT_EOB:
@@ -206,19 +207,24 @@ class Statement(Definition):
 		self.text = None
 		self.prio = statement_prio
 		self.sort_list = sort_statements
+		self.end_char = ';'
 
 	def __str__(self):
 		return self.pre_comment + self.text + self.post_comment
 
-        @staticmethod
-	def parse(is_directive):
-	        global cursor
+	def parse_name(self):
+		self.name = self.text.split('=')[0].strip()
+
+	@staticmethod
+	def parse():
 		s = Statement()
+		s.parse_me()
+		return s
+
+	def parse_me(s):
+	        global cursor
 		text_start = s.parse_precom()
 		skip_whitespace()
-
-		if is_directive: end_char = '\n'
-		else: end_char = ';'
 
 		# find the next semicolon that is neither escaped nor
 		# within a comment
@@ -229,7 +235,7 @@ class Statement(Definition):
 			elif dts[text_end:text_end+2] == '/*':
 				text_end += dts[text_end:].find('*/')
 			else:
-				if dts[text_end] == end_char:
+				if dts[text_end] == s.end_char:
 					text_end += 1
 					break
 				text_end += 1
@@ -238,17 +244,27 @@ class Statement(Definition):
 		cursor = text_end
 
 		s.parse_postcom()
-		
-		if is_directive:
-			s.name = s.text.split()[1].strip('<>')
-		else:
-			s.name = s.text.split('=')[0].strip()
+		s.parse_name()
 
 		debug('statement name %s', s.name)
 		debug('statement text %s',s.text)
 		debug('statement precom %s',s.pre_comment)
 		debug('statement postcom %s',s.post_comment)
-		return s
+
+class Directive(Statement):
+	def __init__(self):
+		Statement.__init__(self)
+		self.prio = directive_prio
+		self.end_char = '\n'
+
+	def parse_name(self):
+		self.name = self.text.split()[1].strip('<>')
+
+	@staticmethod
+	def parse():
+		d = Directive()
+		d.parse_me()
+		return d
 
 class Comment(Part):
 	def __init__(self):
