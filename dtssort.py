@@ -20,12 +20,13 @@ dts = open(sys.argv[1]).read()
 dts_size = len(dts)
 cursor = 0
 
+# skips whitespace and tells us how many LF it encountered in the process
 def skip_whitespace():
 	global cursor
-	had_newline = False
+	had_newline = 0
 	while cursor < dts_size and dts[cursor].isspace():
 		if dts[cursor] == '\n':
-			had_newline = True
+			had_newline += 1
 		cursor += 1
 	return had_newline
 
@@ -50,23 +51,29 @@ def what_is_next(ignore_comment):
 	global cursor
 	start = cursor
 
-	had_newline = cursor == 0
-
+	# make sure that a comment at the start of the file
+	# is not misinterpreted as a post comment
+	if cursor == 0:
+		had_newline = 1
+	else:
+		had_newline = 0
 	while True:
-		had_newline = skip_whitespace() or had_newline
+		had_newline += skip_whitespace()
 		if cursor < dts_size and dts[cursor] == '/' and \
 		   dts[cursor+1] == '*':
 			parse_comment()
-			if had_newline and skip_whitespace():
+			if had_newline > 0 and skip_whitespace() > 1:
+				#debug('global comment %s', dts[start:cursor])
 				cursor = start
 				return NEXT_GLOBAL_COMMENT
 			if not ignore_comment:
-				cursor = start
-				if had_newline:
-					debug('next precomment %s', dts[start:cursor])
+				if had_newline > 0:
+					#debug('next precomment %s', dts[start:cursor])
+					cursor = start
 					return NEXT_PRE_COMMENT
 				else:
-					debug('next postcomment %s', dts[start:cursor])
+					#debug('next postcomment %s', dts[start:cursor])
+					cursor = start
 					return NEXT_POST_COMMENT
 		else:
 			break
