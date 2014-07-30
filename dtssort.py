@@ -3,18 +3,49 @@ from logging import debug, DEBUG, basicConfig
 
 #basicConfig(level=DEBUG)
 
+ORDER_NONE = 0
 ORDER_NAME = 1
 ORDER_LABEL = 2
 ORDER_ADDRESS = 3
 
-#sort_blocks = [ORDER_ADDRESS, ORDER_LABEL, ORDER_NAME]
-#sort_statements = [ORDER_NAME]
-sort_blocks = []
+# defaults
+sort_blocks = [ORDER_ADDRESS]
 sort_statements = []
 statement_prio = 0
 block_prio = 0
 
-dts = open(sys.argv[1]).read()
+import argparse
+
+order_map = {
+	'none': ORDER_NONE,
+	'name': ORDER_NAME,
+	'label': ORDER_LABEL,
+	'address': ORDER_ADDRESS,
+}
+
+parser = argparse.ArgumentParser(description='Sort device tree source files.')
+parser.add_argument('file', metavar='FILE', type=argparse.FileType('r'),
+		    help='File to sort.')
+parser.add_argument('--sort-blocks', metavar='ORDER', type=str,
+		    help='Sort criteria for blocks.')
+parser.add_argument('--sort-statements', metavar='ORDER', type=str,
+		    help='Sort criteria for statements.')
+args = parser.parse_args()
+
+def map_criteria(arg):
+	try:
+		return [order_map[x] for x in args.sort_blocks.split(',')]
+	except KeyError as e:
+		sys.exit('Unknown sort criteria ' + str(e))
+
+if args.sort_blocks:
+	sort_blocks = map_criteria(args.sort_blocks)
+
+if args.sort_statements:
+	sort_statements = map_criteria(args.sort_statements)
+
+dts = args.file.read()
+args.file.close()
 dts_size = len(dts)
 cursor = 0
 
