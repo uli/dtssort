@@ -1,8 +1,6 @@
 import sys
 from logging import debug, DEBUG, basicConfig
 
-#basicConfig(level=DEBUG)
-
 ORDER_NONE = 0
 ORDER_NAME = 1
 ORDER_LABEL = 2
@@ -31,7 +29,11 @@ parser.add_argument('--sort-blocks', metavar='ORDER', type=str,
 		    help='Sort criteria for blocks.')
 parser.add_argument('--sort-statements', metavar='ORDER', type=str,
 		    help='Sort criteria for statements.')
+parser.add_argument('--debug', action='store_true', default=False)
 args = parser.parse_args()
+
+if args.debug:
+	basicConfig(level=DEBUG)
 
 def map_criteria(arg):
 	try:
