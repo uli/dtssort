@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 from logging import debug, DEBUG, basicConfig
 
