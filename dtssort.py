@@ -287,8 +287,11 @@ class Directive(Statement):
 
 	@staticmethod
 	def parse():
+		global cursor
 		d = Directive()
 		d.parse_me()
+		cursor -= 1
+		d.text = d.text[:-1]
 		return d
 
 class Comment(Part):
