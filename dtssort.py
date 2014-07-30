@@ -192,6 +192,7 @@ class Part:
 	def __init__(self):
 		self.prio = 0
 		self.sort_list = []
+		self.dont_move = False
 
 class Definition(Part):
 	def __init__(self):
@@ -269,10 +270,17 @@ class Directive(Statement):
 		Statement.__init__(self)
 		self.prio = directive_prio
 		self.end_char = '\n'
+		self.type = None
 		self.sort_list = sort_directives
 
 	def parse_name(self):
 		try:
+			self.type = self.text.split()[0]
+			# some directives must not be moved, ever
+			if (self.type.startswith('#if') or
+			   self.type.startswith('#el') or
+			   self.type == '#endif'):
+				self.dont_move = True
 			self.name = self.text.split()[1].strip('<>')
 		except:
 			self.name = None
@@ -383,6 +391,8 @@ class Block(Definition):
 		return b
 
 def dt_cmp(a, b):
+	if a.dont_move or b.dont_move:
+		return 0
 	if a.prio != b.prio:
 		return cmp(b.prio, a.prio)
 	if a.__class__ != b.__class__:
