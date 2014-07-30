@@ -327,10 +327,20 @@ class Block(Definition):
 				b.contents += [n]
 			else:
 				suffix_start = cursor
-				suffix_end = dts[cursor:].find('};') + 2 \
-					     + suffix_start
+				suffix_end = cursor
+				while suffix_end < dts_size:
+					if dts[suffix_end] == '\\':
+						suffix_end += 2
+					elif dts[suffix_end:suffix_end+2] == '/*':
+						suffix_end += dts[suffix_end:].find('*/')
+					else:
+						if dts[suffix_end:suffix_end+2] == '};':
+							suffix_end += 2
+							break
+						suffix_end += 1
 				b.suffix = dts[suffix_start:suffix_end]
 				cursor = suffix_end
+
 				break
 		
 		b.parse_postcom()
