@@ -134,18 +134,24 @@ def parse_next():
 
 class Part:
 	def __init__(self):
+		self.prio = 0
+		self.sort_list = []
+
+class Definition(Part):
+	def __init__(self):
+		Part.__init__(self)
 		self.name = None
 		self.label = None
 		self.address = -1
 		self.pre_comment = ""
 		self.post_comment = ""
-		self.prio = 0
 
-class Statement(Part): 
+class Statement(Definition): 
 	def __init__(self):
+		Definition.__init__(self)
 		self.text = None
-		Part.__init__(self)
 		self.prio = statement_prio
+		self.sort_list = sort_statements
 
 	def __str__(self):
 		return self.pre_comment + self.text + self.post_comment
@@ -194,8 +200,8 @@ class Statement(Part):
 
 class Comment(Part):
 	def __init__(self):
+		Part.__init__(self)
 		self.text = None
-		self.prio = 0
 	
 	def __str__(self):
 		return self.text
@@ -207,13 +213,14 @@ class Comment(Part):
 		c.text = parse_comment()
 		return c
 
-class Block(Part):
+class Block(Definition):
 	def __init__(self):
+		Definition.__init__(self)
+		self.prio = block_prio
+		self.sort_list = sort_blocks
 		self.prefix = None
 		self.suffix = None
-		self.contents = list()
-		Part.__init__(self)
-		self.prio = block_prio
+		self.contents = []
 
 	def __str__(self):
 		text = self.pre_comment + self.prefix
@@ -281,13 +288,7 @@ def dt_cmp(a, b):
 		return cmp(b.prio, a.prio)
 	if a.__class__ != b.__class__:
 		return 0
-	if a.__class__ == Block:
-		sort_list = sort_blocks
-	elif a.__class__ == Statement:
-		sort_list = sort_statements
-	else:
-		return 0
-	for i in sort_list:
+	for i in a.sort_list:
 		if i == ORDER_ADDRESS and a.address != b.address:
 			return cmp(a.address, b.address)
 		elif i == ORDER_NAME and a.name != b.name:
