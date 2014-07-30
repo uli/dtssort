@@ -4,7 +4,6 @@ from logging import debug, DEBUG, basicConfig
 
 #basicConfig(level=DEBUG)
 
-ORDER_NONE = 0
 ORDER_NAME = 1
 ORDER_LABEL = 2
 ORDER_ADDRESS = 3
