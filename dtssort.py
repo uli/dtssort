@@ -178,7 +178,8 @@ class Statement(Definition):
 			elif dts[text_end:text_end+2] == '/*':
 				text_end += dts[text_end:].find('*/')
 			else:
-				if dts[cursor] == end_char:
+				if dts[text_end] == end_char:
+					text_end += 1
 					break
 				text_end += 1
 
