@@ -30,6 +30,7 @@ parser.add_argument('--sort-blocks', metavar='ORDER', type=str,
 parser.add_argument('--sort-statements', metavar='ORDER', type=str,
 		    help='Sort criteria for statements.')
 parser.add_argument('--debug', action='store_true', default=False)
+parser.add_argument('--check', action='store_true', default=False)
 args = parser.parse_args()
 
 if args.debug:
@@ -366,7 +367,11 @@ class Block(Definition):
 		debug('block postcom %s',b.post_comment)
 		debug('block address %s',b.address)
 		
-		b.contents.sort(cmp=dt_cmp)
+		if args.check:
+			if b.contents != sorted(b.contents, cmp=dt_cmp):
+				sys.exit('Unsorted block ' + b.name)
+		else:
+			b.contents.sort(cmp=dt_cmp)
 		return b
 
 def dt_cmp(a, b):
@@ -388,7 +393,11 @@ while True:
 	p = parse_next()
 	if p: tree += [p]
 	else: break
-tree.sort(cmp=dt_cmp)
 
-for p in tree:
-	sys.stdout.write(str(p))
+if args.check:
+	if tree != sorted(tree, cmp=dt_cmp):
+		sys.exit('Unsorted at top level')
+else:
+	tree.sort(cmp=dt_cmp)
+	for p in tree:
+		sys.stdout.write(str(p))
