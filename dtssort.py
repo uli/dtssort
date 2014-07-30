@@ -132,7 +132,10 @@ def what_is_next(ignore_comment):
 			break
 
 	while cursor < dts_size:
-		if dts[cursor] == '#' and dts[cursor:].startswith('#include'):
+		if dts[cursor] == '#' and (
+		   dts[cursor:].startswith('#include') or
+		   dts[cursor:].startswith('#if') or
+		   dts[cursor:].startswith('#define')):
 			cursor = start
 			return NEXT_DIRECTIVE
 		if dts[cursor] == ';':
@@ -260,7 +263,10 @@ class Directive(Statement):
 		self.end_char = '\n'
 
 	def parse_name(self):
-		self.name = self.text.split()[1].strip('<>')
+		try:
+			self.name = self.text.split()[1].strip('<>')
+		except:
+			self.name = None
 
 	@staticmethod
 	def parse():
