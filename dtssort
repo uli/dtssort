@@ -293,7 +293,8 @@ class Directive(Statement):
 			   self.type.startswith('#el') or
 			   self.type == '#endif'):
 				self.dont_move = True
-			self.name = self.text.split()[1].strip('<>')
+			# the file name, for #include directives
+			self.name = self.text.split()[1].strip('<>').strip('"')
 		except:
 			self.name = None
 
