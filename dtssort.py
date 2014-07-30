@@ -265,6 +265,8 @@ class Block(Definition):
 				cursor = suffix_end
 				break
 		
+		b.parse_postcom()
+
 		head = b.prefix.rstrip('{')
 		if ':' in head:
 			b.label = head.split(':')[0].strip()
