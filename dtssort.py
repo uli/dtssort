@@ -137,12 +137,15 @@ def what_is_next(ignore_comment):
 			break
 
 	while cursor < dts_size:
-		if dts[cursor] == '#' and (
-		   dts[cursor:].startswith('#include') or
-		   dts[cursor:].startswith('#if') or
-		   dts[cursor:].startswith('#define')):
-			cursor = start
-			return NEXT_DIRECTIVE
+		if dts[cursor] == '#':
+			d = dts[cursor:cursor+9]
+			if (d.startswith('#include') or
+			   d.startswith('#if') or
+			   d.startswith('#el') or
+			   d.startswith('#define') or
+			   d.startswith('#endif')):
+				cursor = start
+				return NEXT_DIRECTIVE
 		if dts[cursor] == ';' or dts[cursor] == '=':
 			cursor = start
 			return NEXT_STATEMENT
