@@ -33,9 +33,17 @@ def skip_whitespace():
 def parse_comment():
 	global cursor
 	comment_start = cursor
-	comment_end = dts[cursor:].find('*/') + 2 + comment_start
+	comment_end = comment_start
 	cursor = comment_end
-	debug('comment start %d end %d', comment_start, comment_end)
+	while True:
+		comment_end = dts[cursor:].find('*/') + 2 + comment_end
+		cursor = comment_end
+		if skip_whitespace() > 1 or what_is_next(False) not in [NEXT_GLOBAL_COMMENT, NEXT_PRE_COMMENT, NEXT_POST_COMMENT]:
+			cursor = comment_end
+			break
+		else:
+			cursor = comment_end
+	#debug('comment start %d end %d: %s', comment_start, comment_end, dts[comment_start:comment_end])
 	return dts[comment_start:comment_end]
 
 NEXT_EOB = 0
