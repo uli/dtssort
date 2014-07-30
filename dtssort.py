@@ -54,6 +54,12 @@ NEXT_DIRECTIVE = 5	# preprocessor directive
 NEXT_GLOBAL_COMMENT = 6	# standalone comment
 NEXT_EOF = 7		# end of file
 
+def comment_is_header(c):
+	if 'Copyright' in c or 'General Public License' in c:
+		return True
+	else:
+		return False
+
 # identify the upcoming entity, optionally ignoring comments
 def what_is_next(ignore_comment):
 	global cursor
@@ -70,18 +76,24 @@ def what_is_next(ignore_comment):
 		if cursor < dts_size and dts[cursor] == '/' and \
 		   dts[cursor+1] == '*':
 			parse_comment()
+			c = dts[start:cursor]
 			if had_newline > 0 and skip_whitespace() > 1:
-				#debug('global comment %s', dts[start:cursor])
+				debug('global comment %s', c)
 				cursor = start
 				return NEXT_GLOBAL_COMMENT
-			if not ignore_comment:
+			elif comment_is_header(c):
+				# if it contains legal stuff we still treat
+				# it as a top-level comment
+				debug('header comment %s', c)
+				cursor = start
+				return NEXT_GLOBAL_COMMENT
+			elif not ignore_comment:
+				cursor = start
 				if had_newline > 0:
-					#debug('next precomment %s', dts[start:cursor])
-					cursor = start
+					debug('precomment %s', c)
 					return NEXT_PRE_COMMENT
 				else:
-					#debug('next postcomment %s', dts[start:cursor])
-					cursor = start
+					debug('postcomment %s', c)
 					return NEXT_POST_COMMENT
 		else:
 			break
@@ -221,6 +233,8 @@ class Comment(Part):
 		global cursor
 		c = Comment()
 		c.text = parse_comment()
+		if comment_is_header(c.text):
+			c.prio = 100
 		return c
 
 class Block(Definition):
