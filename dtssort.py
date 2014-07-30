@@ -34,7 +34,7 @@ args = parser.parse_args()
 
 def map_criteria(arg):
 	try:
-		return [order_map[x] for x in args.sort_blocks.split(',')]
+		return [order_map[x] for x in arg.split(',')]
 	except KeyError as e:
 		sys.exit('Unknown sort criteria ' + str(e))
 
