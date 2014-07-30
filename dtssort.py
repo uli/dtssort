@@ -45,15 +45,16 @@ def parse_comment():
 	#debug('comment start %d end %d: %s', comment_start, comment_end, dts[comment_start:comment_end])
 	return dts[comment_start:comment_end]
 
-NEXT_EOB = 0
+NEXT_EOB = 0		# end of block
 NEXT_BLOCK = 1
-NEXT_STATEMENT = 2
-NEXT_PRE_COMMENT = 3
-NEXT_POST_COMMENT = 4
-NEXT_DIRECTIVE = 5
-NEXT_EOF = 6
-NEXT_GLOBAL_COMMENT = 7
+NEXT_STATEMENT = 2	# property assignment
+NEXT_PRE_COMMENT = 3	# comment belonging to the succeeding definition
+NEXT_POST_COMMENT = 4	# comment belonging to the preceding definition
+NEXT_DIRECTIVE = 5	# preprocessor directive
+NEXT_GLOBAL_COMMENT = 6	# standalone comment
+NEXT_EOF = 7		# end of file
 
+# identify the upcoming entity, optionally ignoring comments
 def what_is_next(ignore_comment):
 	global cursor
 	start = cursor
@@ -120,7 +121,7 @@ def parse_next():
 		return None
 	elif next == NEXT_EOF:
 		if cursor < dts_size:
-			# make sure trailing whitespace is preserved
+			# preserve trailing whitespace and comments
 			s = Statement()
 			s.text = dts[cursor:]
 			s.prio = -100
