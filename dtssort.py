@@ -9,6 +9,7 @@ ORDER_ADDRESS = 3
 # defaults
 sort_blocks = [ORDER_ADDRESS]
 sort_statements = []
+sort_directives = [ORDER_NAME]
 statement_prio = 0
 block_prio = 0
 directive_prio = 0
@@ -27,6 +28,8 @@ parser.add_argument('file', metavar='FILE', type=argparse.FileType('r'),
 		    help='File to sort.')
 parser.add_argument('--sort-blocks', metavar='ORDER', type=str,
 		    help='Sort criteria for blocks.')
+parser.add_argument('--sort-directives', metavar='ORDER', type=str,
+		    help='Sort criteria for preprocessor directives.')
 parser.add_argument('--sort-statements', metavar='ORDER', type=str,
 		    help='Sort criteria for statements.')
 parser.add_argument('--debug', action='store_true', default=False)
@@ -44,7 +47,8 @@ def map_criteria(arg):
 
 if args.sort_blocks:
 	sort_blocks = map_criteria(args.sort_blocks)
-
+if args.sort_directives:
+	sort_directives = map_criteria(args.sort_directives)
 if args.sort_statements:
 	sort_statements = map_criteria(args.sort_statements)
 
@@ -262,6 +266,7 @@ class Directive(Statement):
 		Statement.__init__(self)
 		self.prio = directive_prio
 		self.end_char = '\n'
+		self.sort_list = sort_directives
 
 	def parse_name(self):
 		try:
