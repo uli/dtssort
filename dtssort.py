@@ -146,6 +146,18 @@ class Definition(Part):
 		self.pre_comment = ""
 		self.post_comment = ""
 
+	def parse_precom(self):
+		global cursor
+		text_start = cursor
+		if what_is_next(False) == NEXT_PRE_COMMENT:
+			self.pre_comment = parse_comment()
+			text_start = cursor
+		return text_start
+
+	def parse_postcom(self):
+		if what_is_next(False) == NEXT_POST_COMMENT:
+			self.post_comment = parse_comment()
+
 class Statement(Definition): 
 	def __init__(self):
 		Definition.__init__(self)
@@ -160,10 +172,7 @@ class Statement(Definition):
 	def parse(is_directive):
 	        global cursor
 		s = Statement()
-		text_start = cursor
-		if what_is_next(False) == NEXT_PRE_COMMENT:
-			s.pre_comment = parse_comment()
-			text_start = cursor
+		text_start = s.parse_precom()
 		skip_whitespace()
 
 		if is_directive: end_char = '\n'
@@ -185,8 +194,8 @@ class Statement(Definition):
 
 		s.text = dts[text_start:text_end]
 		cursor = text_end
-		if what_is_next(False) == NEXT_POST_COMMENT:
-			s.post_comment = parse_comment()
+
+		s.parse_postcom()
 		
 		if is_directive:
 			s.name = s.text.split()[1].strip('<>')
@@ -234,11 +243,7 @@ class Block(Definition):
 	def parse():
 	        global cursor
 		b = Block()
-		prefix_start = cursor
-		if what_is_next(False) == NEXT_PRE_COMMENT:
-			b.pre_comment = parse_comment()
-			prefix_start = cursor
-
+		prefix_start = b.parse_precom()
 		skip_whitespace()
 		if cursor >= dts_size:
 			return None
