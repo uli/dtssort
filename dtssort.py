@@ -1,5 +1,4 @@
 import sys
-import re
 from logging import debug, DEBUG, basicConfig
 
 #basicConfig(level=DEBUG)
