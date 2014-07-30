@@ -61,12 +61,12 @@ cursor = 0
 # skips whitespace and tells us how many LF it encountered in the process
 def skip_whitespace():
 	global cursor
-	had_newline = 0
+	newlines = 0
 	while cursor < dts_size and dts[cursor].isspace():
 		if dts[cursor] == '\n':
-			had_newline += 1
+			newlines += 1
 		cursor += 1
-	return had_newline
+	return newlines
 
 def parse_comment():
 	global cursor
@@ -107,31 +107,38 @@ def what_is_next(ignore_comment):
 	# make sure that a comment at the start of the file
 	# is not misinterpreted as a post comment
 	if cursor == 0:
-		had_newline = 1
+		newlines = 1
 	else:
-		had_newline = 0
+		newlines = 0
 	while True:
-		had_newline += skip_whitespace()
+		newlines += skip_whitespace()
 		if cursor < dts_size and dts[cursor] == '/' and \
 		   dts[cursor+1] == '*':
 			parse_comment()
 			c = dts[start:cursor]
-			if had_newline > 0 and skip_whitespace() > 1:
+			if newlines > 0 and skip_whitespace() > 1:
+				# starts on a new line and is followed by
+				# a blank line: we're assuming it is not
+				# tied to a specific entity
 				debug('global comment %s', c)
 				cursor = start
 				return NEXT_GLOBAL_COMMENT
 			elif comment_is_header(c):
 				# if it contains legal stuff we still treat
-				# it as a top-level comment
+				# it as an independent comment
 				debug('header comment %s', c)
 				cursor = start
 				return NEXT_GLOBAL_COMMENT
 			elif not ignore_comment:
 				cursor = start
-				if had_newline > 0:
+				if newlines > 0:
+					# starts on a new line: tie it to the
+					# succeeding element
 					debug('precomment %s', c)
 					return NEXT_PRE_COMMENT
 				else:
+					# doesn't even have its own line: owned
+					# by the preceding element
 					debug('postcomment %s', c)
 					return NEXT_POST_COMMENT
 		else:
@@ -164,7 +171,6 @@ def what_is_next(ignore_comment):
 
 def parse_next():
 	global cursor
-	#debug('parse_next at',cursor)
 	next = what_is_next(True)
 	if next == NEXT_BLOCK:
 		return Block.parse()
@@ -238,9 +244,11 @@ class Statement(Definition):
 
 	def parse_me(s):
 	        global cursor
+	        # pre comment
 		text_start = s.parse_precom()
 		skip_whitespace()
 
+		# text (the unaltered statement, sans comments
 		# find the next semicolon that is neither escaped nor
 		# within a comment
 		text_end = cursor
@@ -258,7 +266,9 @@ class Statement(Definition):
 		s.text = dts[text_start:text_end]
 		cursor = text_end
 
+		# post comment
 		s.parse_postcom()
+		# metadata
 		s.parse_name()
 
 		debug('statement name %s', s.name)
@@ -276,8 +286,9 @@ class Directive(Statement):
 
 	def parse_name(self):
 		try:
+			# the "hash something" part
 			self.type = self.text.split()[0]
-			# some directives must not be moved, ever
+			# some types of directives must not be moved
 			if (self.type.startswith('#if') or
 			   self.type.startswith('#el') or
 			   self.type == '#endif'):
@@ -291,6 +302,9 @@ class Directive(Statement):
 		global cursor
 		d = Directive()
 		d.parse_me()
+		# remove the trailing LF and add keep it for the next element
+		# elements generally own the preceding whitespace, so
+		# directives have to as well to prevent formatting errors
 		cursor -= 1
 		d.text = d.text[:-1]
 		return d
@@ -308,6 +322,7 @@ class Comment(Part):
 		global cursor
 		c = Comment()
 		c.text = parse_comment()
+		# make sure copyright notices stay at the top
 		if comment_is_header(c.text):
 			c.prio = 100
 		return c
@@ -332,16 +347,20 @@ class Block(Definition):
 	def parse():
 	        global cursor
 		b = Block()
+
+		# pre comment
 		prefix_start = b.parse_precom()
 		skip_whitespace()
 		if cursor >= dts_size:
 			return None
 
+		# block prefix
 		cursor += dts[cursor:].find('{') + 1
 		prefix_end = cursor
 		b.prefix = dts[prefix_start:prefix_end]
 		debug('block prefix %s',b.prefix)
 		
+		# block contents
 		while True:
 			n = parse_next()
 			if n != None:
@@ -364,8 +383,10 @@ class Block(Definition):
 
 				break
 		
+		# post comment
 		b.parse_postcom()
 
+		# metadata
 		head = b.prefix.rstrip('{')
 		if ':' in head:
 			b.label = head.split(':')[0].strip()
@@ -387,6 +408,7 @@ class Block(Definition):
 		debug('block postcom %s',b.post_comment)
 		debug('block address %s',b.address)
 		
+		# sorting
 		if args.check:
 			if b.contents != sorted(b.contents, cmp=dt_cmp):
 				sys.exit('Unsorted block ' + b.name)
@@ -400,6 +422,8 @@ def dt_cmp(a, b):
 	if a.prio != b.prio:
 		return cmp(b.prio, a.prio)
 	if a.__class__ != b.__class__:
+		# different classes of objects can only be compared by their
+		# priority, but we already checked that
 		return 0
 	for i in a.sort_list:
 		if i == ORDER_ADDRESS and a.address != b.address:
