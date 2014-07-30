@@ -138,7 +138,7 @@ def what_is_next(ignore_comment):
 		   dts[cursor:].startswith('#define')):
 			cursor = start
 			return NEXT_DIRECTIVE
-		if dts[cursor] == ';':
+		if dts[cursor] == ';' or dts[cursor] == '=':
 			cursor = start
 			return NEXT_STATEMENT
 		elif dts[cursor] == '{':
