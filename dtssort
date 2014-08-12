@@ -9,7 +9,7 @@ ORDER_ADDRESS = 3
 
 # defaults
 sort_blocks = [ORDER_ADDRESS]
-sort_statements = []
+sort_statements = [ORDER_NONE]
 sort_directives = [ORDER_NAME]
 statement_prio = 0
 block_prio = 0
@@ -23,16 +23,36 @@ order_map = {
 	'label': ORDER_LABEL,
 	'address': ORDER_ADDRESS,
 }
+order_unmap = {
+	ORDER_NONE: 'none',
+	ORDER_NAME: 'name',
+	ORDER_LABEL: 'label',
+	ORDER_ADDRESS: 'address',
+}
+
+def map_criteria(arg):
+	try:
+		return [order_map[x] for x in arg.split(',')]
+	except KeyError as e:
+		sys.exit('Unknown sort criteria ' + str(e))
+def unmap_criteria(arg):
+	try:
+		return ','.join([order_unmap[x] for x in arg])
+	except KeyError as e:
+		sys.exit('Unknown sort criteria ' + str(e))
 
 parser = argparse.ArgumentParser(description='Sort device tree source files.')
 parser.add_argument('file', metavar='FILE', type=argparse.FileType('r'),
 		    help='File to sort.')
 parser.add_argument('--sort-blocks', metavar='ORDER', type=str,
-		    help='Sort criteria for blocks.')
+		    help='Sort criteria for blocks. (default "' +
+			 unmap_criteria(sort_blocks) + '")')
 parser.add_argument('--sort-directives', metavar='ORDER', type=str,
-		    help='Sort criteria for preprocessor directives.')
+		    help='Sort criteria for preprocessor directives. (default "' +
+			 unmap_criteria(sort_directives) + '")')
 parser.add_argument('--sort-statements', metavar='ORDER', type=str,
-		    help='Sort criteria for statements.')
+		    help='Sort criteria for statements. (default "' +
+			 unmap_criteria(sort_statements) + '")')
 parser.add_argument('--debug', action='store_true', default=False)
 parser.add_argument('--check', action='store_true', default=False)
 args = parser.parse_args()
@@ -40,11 +60,6 @@ args = parser.parse_args()
 if args.debug:
 	basicConfig(level=DEBUG)
 
-def map_criteria(arg):
-	try:
-		return [order_map[x] for x in arg.split(',')]
-	except KeyError as e:
-		sys.exit('Unknown sort criteria ' + str(e))
 
 if args.sort_blocks:
 	sort_blocks = map_criteria(args.sort_blocks)
