@@ -243,12 +243,12 @@ class Statement(Definition):
 		return s
 
 	def parse_me(s):
-	        global cursor
-	        # pre comment
+		global cursor
+		# pre comment
 		text_start = s.parse_precom()
 		skip_whitespace()
 
-		# text (the unaltered statement, sans comments
+		# text (the unaltered statement, sans comments)
 		# find the next semicolon that is neither escaped nor
 		# within a comment
 		text_end = cursor
@@ -344,9 +344,9 @@ class Block(Definition):
 		text += self.suffix
 		return text
 
-        @staticmethod
+	@staticmethod
 	def parse():
-	        global cursor
+		global cursor
 		b = Block()
 
 		# pre comment
