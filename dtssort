@@ -66,13 +66,13 @@ if args.debug:
 	basicConfig(level=DEBUG)
 
 
-if args.sort_blocks:
+if args.sort_blocks != None:
 	sort_blocks = map_criteria(args.sort_blocks)
-if args.sort_directives:
+if args.sort_directives != None:
 	sort_directives = map_criteria(args.sort_directives)
-if args.sort_statements:
+if args.sort_statements != None:
 	sort_statements = map_criteria(args.sort_statements)
-if args.sort_top:
+if args.sort_top != None:
 	sort_top = args.sort_top.split(',')
 
 dts = args.file.read()
